@@ -13,10 +13,11 @@ GitHub Actions pipeline, and the test report is sent to a local receiver that sa
 | File | Purpose |
 |---|---|
 | `app.py`, `templates/index.html` | The portal (form, validation, saving, list of submissions) |
-| `tests/test_portal.py` | 3 automated tests (pytest) |
+| `tests/test_portal.py` | 8 automated tests (pytest) |
 | `.github/workflows/ci.yml` | CI pipeline: runs tests on every push, sends report, deploys Pages |
 | `send_report.py` | Turns pytest's `results.xml` into JSON and POSTs it to the receiver |
 | `receiver.py` | Local HTTP receiver on port 5001, saves `test-report.json` |
+| `send_email.py` | Emails the test report after every run (bonus) |
 | `docs/index.html` | Static demo published to GitHub Pages (bonus) |
 
 ## Requirements
@@ -36,13 +37,18 @@ Open http://localhost:5000 (or double-click `start_app.bat`).
 ```
 python -m pytest -v
 ```
-(or double-click `run_tests.bat`). Tests:
+(or double-click `run_tests.bat`). 8 tests:
 
 | Test | Expected result |
 |---|---|
 | `test_valid_submission_is_saved_and_listed` | Saved and shown in the list |
 | `test_missing_registration_number_is_rejected` | Rejected with "Registration number is required." |
 | `test_invalid_url_is_rejected_and_not_saved` | Rejected, nothing saved |
+| `test_blank_or_whitespace_fields_are_rejected` | Empty or spaces-only fields rejected |
+| `test_unsafe_or_incomplete_urls_are_rejected` | `ftp://`, `javascript:`, no scheme, no domain rejected |
+| `test_input_is_trimmed_before_saving` | Extra spaces removed before saving |
+| `test_multiple_submissions_are_all_listed` | Several submissions saved and listed |
+| `test_invalid_attempt_does_not_change_existing_records` | A bad attempt leaves saved data unchanged |
 
 ## 3. Start the report receiver
 
@@ -63,7 +69,8 @@ Pipeline steps (on every push):
 2. Install dependencies
 3. Run tests → `results.xml` (a failed test fails this step and the job)
 4. Send report (`if: always()`, so it runs for passing **and** failing runs)
-5. `deploy-pages` job (bonus): only on `main` and only if `test` succeeded
+5. Email report (`if: always()`, bonus)
+6. `deploy-pages` job (bonus): only on `main` and only if `test` succeeded
 
 ### Start the self-hosted runner
 
@@ -95,10 +102,23 @@ runner → Windows, and follow the commands shown.
 ## Demo (pass → fail → fix)
 
 1. Start `receiver.py` and the runner.
-2. Push → all 3 tests pass → `test-report.json` shows `"overall_status": "passed"`.
-3. Introduce a defect, e.g. in `app.py` make `is_valid_url` just `return True`. Push → the invalid URL
-   test fails → pipeline is red → `test-report.json` shows `"failed": 1`.
+2. Push → all 8 tests pass → `test-report.json` shows `"overall_status": "passed"`.
+3. Introduce a defect, e.g. in `app.py` make `is_valid_url` just `return True`. Push → the two URL
+   tests fail → pipeline is red → `test-report.json` shows `"failed": 2`.
 4. Undo the defect and push → green again.
+
+## Email report (bonus)
+
+`send_email.py` sends the report (commit, overall result, counts, each test, JSON attached) after
+every run through Gmail SMTP. Configure in GitHub → Settings → Secrets and variables → Actions:
+
+| Name | Type | Value |
+|---|---|---|
+| `SMTP_USER` | Secret | Sender Gmail address |
+| `SMTP_PASSWORD` | Secret | Gmail App Password (not the normal password) |
+| `REPORT_EMAIL_TO` | Variable | Receiver address(es), comma separated |
+
+If the secrets are missing, the step prints "Email skipped" instead of failing.
 
 ## GitHub Pages (bonus)
 

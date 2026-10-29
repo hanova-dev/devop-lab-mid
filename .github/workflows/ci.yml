@@ -32,6 +32,16 @@ jobs:
         if: always()
         run: python send_report.py results.xml
 
+      - name: Email test report (bonus)
+        # Also always(): an email is sent for passing and failing runs.
+        # Credentials come from GitHub Actions secrets, never from the code.
+        if: always()
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          REPORT_EMAIL_TO: ${{ vars.REPORT_EMAIL_TO }}
+        run: python send_email.py ci-report.json
+
   # Bonus: publish the static demo to GitHub Pages only when all tests passed on main.
   deploy-pages:
     needs: test

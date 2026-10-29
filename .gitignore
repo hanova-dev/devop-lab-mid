@@ -1,9 +1,11 @@
 __pycache__/
 .pytest_cache/
 results.xml
+ci-report.json
 submissions.json
 test-report.json
 reports/
+evidence/
 _setup/
 *.docx
 ~$*

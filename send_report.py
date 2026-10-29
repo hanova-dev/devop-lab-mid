@@ -63,6 +63,9 @@ if __name__ == "__main__":
     xml_file = sys.argv[1] if len(sys.argv) > 1 else "results.xml"
     data = build_report(xml_file)
     print(json.dumps(data, indent=2))
+    # Keep a copy in the workspace so the email step can attach it.
+    with open("ci-report.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
     try:
         send(data)
     except Exception as exc:  # receiver not running, wrong port, etc.
