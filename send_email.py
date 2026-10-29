@@ -7,7 +7,7 @@ workflow fills from GitHub Actions secrets:
   SMTP_USER        sender Gmail address                (secret)
   SMTP_PASSWORD    Gmail App Password                  (secret)
   REPORT_EMAIL_TO  receiver address(es), comma separated (repository variable)
-  SMTP_HOST / SMTP_PORT   optional, default smtp.gmail.com / 587
+  SMTP_HOST / SMTP_PORT   optional, default smtp.gmail.com / 587 (465 = SSL)
 
 Usage: python send_email.py ci-report.json
 """
@@ -73,11 +73,15 @@ def main():
     receivers = [a.strip() for a in to.split(",") if a.strip()]
     msg = build_message(report, user, receivers)
 
-    host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
-    port = int(os.environ.get("SMTP_PORT", "587"))
-    with smtplib.SMTP(host, port, timeout=30) as smtp:
+    host = os.environ.get("SMTP_HOST") or "smtp.gmail.com"
+    port = int(os.environ.get("SMTP_PORT") or "587")
+    if port == 465:  # SSL from the start
+        smtp = smtplib.SMTP_SSL(host, port, timeout=30)
+    else:            # plain connection upgraded with STARTTLS
+        smtp = smtplib.SMTP(host, port, timeout=30)
         if os.environ.get("SMTP_STARTTLS", "1") == "1":
             smtp.starttls()
+    with smtp:
         smtp.login(user, password)
         smtp.send_message(msg)
     print(f"Email sent to {', '.join(receivers)}: {msg['Subject']}")

@@ -69,8 +69,9 @@ Pipeline steps (on every push):
 2. Install dependencies
 3. Run tests → `results.xml` (a failed test fails this step and the job)
 4. Send report (`if: always()`, so it runs for passing **and** failing runs)
-5. Email report (`if: always()`, bonus)
-6. `deploy-pages` job (bonus): only on `main` and only if `test` succeeded
+5. Upload `ci-report.json` as an artifact (`if: always()`)
+6. `email-report` job (bonus, `if: always()`): on a GitHub-hosted runner, emails the report
+7. `deploy-pages` job (bonus): only on `main` and only if `test` succeeded
 
 ### Start the self-hosted runner
 
@@ -118,6 +119,8 @@ every run through Gmail SMTP. Configure in GitHub → Settings → Secrets and v
 | `SMTP_PASSWORD` | Secret | Gmail App Password (not the normal password) |
 | `REPORT_EMAIL_TO` | Variable | Receiver address(es), comma separated |
 
+The `email-report` job runs on a GitHub-hosted runner (`ubuntu-latest`) because my local network
+blocks Gmail's SMTP ports; it downloads the report artifact from the `test` job and sends it.
 If the secrets are missing, the step prints "Email skipped" instead of failing.
 
 ## GitHub Pages (bonus)
