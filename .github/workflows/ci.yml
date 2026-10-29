@@ -1,0 +1,53 @@
+name: CI - Test and Report
+
+# Runs on every push (any branch). Can also be started by hand from the Actions tab.
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Self-hosted runner = my own laptop, so "localhost" is my laptop and
+    # the report reaches receiver.py directly (no tunnel needed).
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: cmd
+    steps:
+      - name: Checkout pushed revision
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: python -m pip install --quiet -r requirements.txt
+
+      - name: Run tests
+        # If any test fails, pytest exits with code 1 and this step (and the job) fails.
+        run: python -m pytest -v --junitxml=results.xml
+
+      - name: Send test report to local receiver
+        # always() = run even when the test step failed, so failing runs are reported too.
+        if: always()
+        run: python send_report.py results.xml
+
+  # Bonus: publish the static demo to GitHub Pages only when all tests passed on main.
+  deploy-pages:
+    needs: test
+    if: github.ref == 'refs/heads/main' && needs.test.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4
