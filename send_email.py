@@ -76,17 +76,38 @@ def main():
     msg = build_message(report, user, receivers)
 
     host = os.environ.get("SMTP_HOST") or "smtp.gmail.com"
-    port = int(os.environ.get("SMTP_PORT") or "587")
-    if port == 465:  # SSL from the start
-        smtp = smtplib.SMTP_SSL(host, port, timeout=30)
-    else:            # plain connection upgraded with STARTTLS
-        smtp = smtplib.SMTP(host, port, timeout=30)
-        if os.environ.get("SMTP_STARTTLS", "1") == "1":
-            smtp.starttls()
-    print(f"Connecting to {host}:{port} as {user} (App Password length: {len(password)})")
-    with smtp:
-        smtp.login(user, password)
-        smtp.send_message(msg)
+    first = int(os.environ.get("SMTP_PORT") or "465")
+    ports = [first] + [p for p in (465, 587) if p != first]
+    print(f"Sender {user}, App Password length {len(password)}")
+
+    errors = []
+    for port in ports:
+        for mech in ("LOGIN", "PLAIN"):
+            try:
+                if port == 465:
+                    smtp = smtplib.SMTP_SSL(host, port, timeout=30)
+                else:
+                    smtp = smtplib.SMTP(host, port, timeout=30)
+                    smtp.starttls()
+                with smtp:
+                    smtp.ehlo()
+                    smtp.user, smtp.password = user, password
+                    smtp.auth(mech, getattr(smtp, "auth_" + mech.lower()), initial_response_ok=False)
+                    smtp.send_message(msg)
+                print(f"Login OK on port {port} with AUTH {mech}")
+                break
+            except smtplib.SMTPAuthenticationError as exc:
+                errors.append(f"port {port} AUTH {mech}: rejected {exc.smtp_code} {exc.smtp_error.decode(errors='replace')}")
+            except Exception as exc:
+                errors.append(f"port {port} AUTH {mech}: {type(exc).__name__}: {exc}")
+            print(errors[-1])
+        else:
+            continue
+        break
+    else:
+        print("ERROR: could not send the email. Attempts:")
+        print("\n".join(errors))
+        sys.exit(1)
     print(f"Email sent to {', '.join(receivers)}: {msg['Subject']}")
 
 
