@@ -13,6 +13,7 @@ Usage: python send_email.py ci-report.json
 """
 import json
 import os
+import re
 import smtplib
 import sys
 from email.message import EmailMessage
@@ -58,8 +59,9 @@ def build_message(report, sender, receivers):
 
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else "ci-report.json"
-    user = os.environ.get("SMTP_USER", "").strip()
-    password = os.environ.get("SMTP_PASSWORD", "").replace(" ", "")
+    user = "".join(os.environ.get("SMTP_USER", "").split())
+    # Gmail shows the App Password in groups with non-breaking spaces; keep only the letters/digits.
+    password = re.sub(r"[^A-Za-z0-9]", "", os.environ.get("SMTP_PASSWORD", ""))
     to = os.environ.get("REPORT_EMAIL_TO", "").strip() or user
     if not user or not password:
         print("Email skipped: SMTP_USER / SMTP_PASSWORD secrets are not set.")
@@ -81,6 +83,7 @@ def main():
         smtp = smtplib.SMTP(host, port, timeout=30)
         if os.environ.get("SMTP_STARTTLS", "1") == "1":
             smtp.starttls()
+    print(f"Connecting to {host}:{port} as {user} (App Password length: {len(password)})")
     with smtp:
         smtp.login(user, password)
         smtp.send_message(msg)
