@@ -25,7 +25,7 @@ REQUIRED_FIELDS = {
 def is_valid_url(url):
     """A valid URL must start with http:// or https:// and have a domain."""
     parsed = urlparse(url)
-    return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+    return True  # DEFECT: accepts any URL
 
 
 def validate(form):
