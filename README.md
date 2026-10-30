@@ -95,7 +95,7 @@ runner → Windows, and follow the commands shown.
   "run_id": "...",
   "timestamp": "2026-10-30T10:00:00+00:00",
   "tests": [{"name": "...", "result": "passed", "failure_message": null}],
-  "summary": {"total": 3, "passed": 3, "failed": 0},
+  "summary": {"total": 8, "passed": 8, "failed": 0},
   "overall_status": "passed"
 }
 ```
@@ -119,8 +119,8 @@ every run through Gmail SMTP. Configure in GitHub → Settings → Secrets and v
 | `SMTP_PASSWORD` | Secret | Gmail App Password (not the normal password) |
 | `REPORT_EMAIL_TO` | Variable | Receiver address(es), comma separated |
 
-The `email-report` job runs on a GitHub-hosted runner (`ubuntu-latest`) because my local network
-blocks Gmail's SMTP ports; it downloads the report artifact from the `test` job and sends it.
+The `email-report` job runs on a GitHub-hosted runner (`ubuntu-latest`), so email delivery does not
+depend on my laptop; it downloads the report artifact from the `test` job and sends it.
 If the secrets are missing, the step prints "Email skipped" instead of failing.
 
 ## GitHub Pages (bonus)

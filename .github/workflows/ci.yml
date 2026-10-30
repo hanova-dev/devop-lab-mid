@@ -40,7 +40,7 @@ jobs:
           path: ci-report.json
 
   # Bonus: email the report after every run (passing or failing).
-  # Runs on a GitHub-hosted runner because my network blocks Gmail's SMTP ports.
+  # Runs on a GitHub-hosted runner so email delivery does not depend on my laptop.
   email-report:
     needs: test
     if: always()
