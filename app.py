@@ -10,7 +10,10 @@ from urllib.parse import urlparse
 
 from flask import Flask, render_template, request
 
+import pipeline
+
 app = Flask(__name__)
+app.register_blueprint(pipeline.bp)  # live pipeline panel: /api/status, /api/run-tests, /api/demo/...
 # Where submissions are stored. Tests point this to a temporary file.
 app.config["DATA_FILE"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "submissions.json")
 
@@ -73,6 +76,13 @@ def index():
                 "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             })
             message = "Submission saved successfully."
+            # Start the CI checks automatically (not while testing or inside CI itself).
+            if not app.config.get("TESTING") and not os.environ.get("GITHUB_ACTIONS"):
+                try:
+                    pipeline.trigger_run()
+                    message += " Checks started on GitHub Actions."
+                except Exception:
+                    message += " (Could not start the checks automatically - use Run Tests.)"
     return render_template(
         "index.html",
         errors=errors,
@@ -83,4 +93,4 @@ def index():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(port=5000)

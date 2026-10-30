@@ -13,6 +13,8 @@ GitHub Actions pipeline, and the test report is sent to a local receiver that sa
 | File | Purpose |
 |---|---|
 | `app.py`, `templates/index.html` | The portal (form, validation, saving, list of submissions) |
+| `pipeline.py` | Live pipeline panel: reads the latest GitHub run and `test-report.json` |
+| `demo_controller.py` | Push defect / Fix & push for the demo |
 | `tests/test_portal.py` | 8 automated tests (pytest) |
 | `.github/workflows/ci.yml` | CI pipeline: runs tests on every push, sends report, deploys Pages |
 | `send_report.py` | Turns pytest's `results.xml` into JSON and POSTs it to the receiver |
@@ -31,6 +33,15 @@ GitHub Actions pipeline, and the test report is sent to a local receiver that sa
 python app.py
 ```
 Open http://localhost:5000 (or double-click `start_app.bat`).
+
+The page has two parts:
+- **Submit an assignment** – the form and the list of saved submissions. A valid submission also
+  starts the CI checks on GitHub Actions automatically.
+- **Pipeline checks** – live view (refreshes every 4 s) of the latest GitHub Actions run: Push →
+  Tests (laptop) → Report → localhost → Email → GitHub Pages, the pass/fail counts and every test
+  from `test-report.json`. Buttons: **Run tests** (workflow_dispatch), **Push defect** and
+  **Fix & push** (`demo_controller.py` edits `app.py`, commits and pushes).
+  `pipeline.py` talks to the GitHub API using the login Git already saved on the computer.
 
 ## 2. Run the tests
 

@@ -5,55 +5,212 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Assignment Submission Portal</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 820px; margin: 30px auto; padding: 0 16px; background: #f5f7fa; color: #222; }
-    h1 { color: #1a4d8f; }
-    form, table { background: #fff; border: 1px solid #dde3ea; border-radius: 8px; }
-    form { padding: 20px; }
-    label { display: block; margin-top: 12px; font-weight: bold; }
-    input { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; border: 1px solid #bbb; border-radius: 4px; }
-    button { margin-top: 16px; padding: 10px 20px; background: #1a4d8f; color: #fff; border: 0; border-radius: 4px; cursor: pointer; }
-    .error { background: #fde8e8; color: #9b1c1c; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
-    .success { background: #e3f6e8; color: #1e6b34; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
-    th { background: #eef3f9; }
+    :root { --ink:#13212f; --muted:#5b6b7b; --line:#e3e8ee; --bg:#eef2f5; --card:#fff;
+            --brand:#0f766e; --brand2:#115e59; --ok:#15803d; --okbg:#e7f6ec; --bad:#c2410c; --badbg:#fdeee6;
+            --run:#b45309; --runbg:#fff6e5; --skip:#94a3b8; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: "Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--ink); }
+    header { background:var(--ink); color:#fff; padding:18px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+    header h1 { margin:0; font-size:20px; letter-spacing:.2px; }
+    header .sub { font-size:13px; color:#9fb3c4; margin-top:3px; }
+    .chip { font-size:12px; padding:5px 10px; border-radius:999px; background:#1f3445; color:#cfe3f1; }
+    main { max-width:1180px; margin:24px auto; padding:0 16px; display:grid; grid-template-columns: 380px 1fr; gap:20px; align-items:start; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; }
+    .card h2 { margin:0 0 4px; font-size:17px; }
+    .card .hint { margin:0 0 14px; color:var(--muted); font-size:13px; }
+    label { display:block; margin-top:12px; font-weight:600; font-size:13px; }
+    input { width:100%; padding:9px 10px; margin-top:5px; border:1px solid #c9d3dc; border-radius:8px; font-size:14px; }
+    input:focus { outline:2px solid #99d5cf; border-color:var(--brand); }
+    button { font: inherit; cursor:pointer; border-radius:8px; border:1px solid transparent; padding:10px 14px; font-weight:600; font-size:14px; }
+    .primary { background:var(--brand); color:#fff; width:100%; margin-top:16px; }
+    .primary:hover { background:var(--brand2); }
+    .msg { padding:10px 12px; border-radius:8px; font-size:14px; margin-bottom:12px; }
+    .msg.ok { background:var(--okbg); color:var(--ok); } .msg.err { background:var(--badbg); color:var(--bad); }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:top; word-break:break-word; }
+    th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.4px; }
+    .list { margin-top:20px; }
+
+    /* pipeline panel */
+    .banner { display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:10px; font-weight:700; font-size:16px; margin:12px 0 16px; }
+    .banner.ok { background:var(--okbg); color:var(--ok); } .banner.bad { background:var(--badbg); color:var(--bad); }
+    .banner.run { background:var(--runbg); color:var(--run); } .banner.idle { background:#eef2f6; color:var(--muted); }
+    .banner small { display:block; font-weight:400; font-size:12px; color:var(--muted); margin-top:2px; }
+    .steps { display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin-bottom:16px; }
+    @media (max-width: 600px) { .steps { grid-template-columns: repeat(2, 1fr); } }
+    .step { border:1px solid var(--line); border-radius:10px; padding:10px; border-top:4px solid var(--skip); }
+    .step b { display:block; font-size:13px; } .step span { font-size:12px; color:var(--muted); }
+    .step.ok { border-top-color:var(--ok); } .step.bad { border-top-color:var(--bad); }
+    .step.run { border-top-color:var(--run); } .step.skip { border-top-color:var(--skip); }
+    .meta { font-size:13px; color:var(--muted); margin-bottom:14px; line-height:1.6; }
+    .meta a { color:var(--brand); }
+    .nums { display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:16px; }
+    .num { background:#f6f8fa; border-radius:10px; padding:10px 12px; }
+    .num div { font-size:12px; color:var(--muted); } .num strong { font-size:22px; }
+    .bar { height:8px; background:#e2e8f0; border-radius:99px; overflow:hidden; margin:-6px 0 16px; }
+    .bar i { display:block; height:100%; background:var(--ok); width:0; transition:width .4s; }
+    .tag { font-size:11px; font-weight:700; padding:3px 8px; border-radius:99px; }
+    .tag.passed { background:var(--okbg); color:var(--ok); } .tag.failed { background:var(--badbg); color:var(--bad); }
+    .why { color:var(--bad); font-family:Consolas, monospace; font-size:12px; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+    .actions button { flex:1; min-width:150px; }
+    .b-run { background:var(--ink); color:#fff; } .b-break { background:#fff; color:var(--bad); border-color:#f3c4ab; }
+    .b-fix { background:#fff; color:var(--ok); border-color:#b7e1c4; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    #note { font-size:13px; color:var(--muted); margin-top:10px; min-height:18px; }
   </style>
 </head>
 <body>
-  <h1>Assignment Submission Portal</h1>
+<header>
+  <div>
+    <h1>Assignment Submission Portal</h1>
+    <div class="sub">CSC418 DevOps Lab Mid · every push is tested automatically</div>
+  </div>
+  <span class="chip" id="conn">Connecting to GitHub…</span>
+</header>
 
-  {% if message %}<div class="success">{{ message }}</div>{% endif %}
-  {% if errors %}
-    <div class="error">
-      {% for e in errors %}<div>{{ e }}</div>{% endfor %}
+<main>
+  <section>
+    <div class="card">
+      <h2>Submit an assignment</h2>
+      <p class="hint">All fields are required. Paste a link, no file upload needed.</p>
+      {% if message %}<div class="msg ok">{{ message }}</div>{% endif %}
+      {% if errors %}<div class="msg err">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+      <form method="post" novalidate>
+        <label for="name">Student name</label>
+        <input id="name" name="name" value="{{ form.get('name', '') if errors else '' }}">
+        <label for="reg_no">Registration number</label>
+        <input id="reg_no" name="reg_no" placeholder="FA23-BSE-000" value="{{ form.get('reg_no', '') if errors else '' }}">
+        <label for="title">Assignment title</label>
+        <input id="title" name="title" value="{{ form.get('title', '') if errors else '' }}">
+        <label for="url">Submission URL</label>
+        <input id="url" name="url" placeholder="https://github.com/you/assignment" value="{{ form.get('url', '') if errors else '' }}">
+        <button class="primary" type="submit">Submit &amp; run checks</button>
+      </form>
     </div>
-  {% endif %}
 
-  <form method="post" novalidate>
-    <label for="name">Student name</label>
-    <input id="name" name="name" value="{{ form.get('name', '') if errors else '' }}">
+    <div class="card list">
+      <h2>Saved submissions ({{ submissions|length }})</h2>
+      <table>
+        <tr><th>Name</th><th>Reg. No</th><th>Title</th><th>URL</th></tr>
+        {% for s in submissions|reverse %}
+          <tr><td>{{ s.name }}</td><td>{{ s.reg_no }}</td><td>{{ s.title }}</td>
+              <td><a href="{{ s.url }}" target="_blank">{{ s.url }}</a><br><small>{{ s.submitted_at }}</small></td></tr>
+        {% else %}
+          <tr><td colspan="4">No submissions yet.</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  </section>
 
-    <label for="reg_no">Registration number</label>
-    <input id="reg_no" name="reg_no" placeholder="FA23-BSE-000" value="{{ form.get('reg_no', '') if errors else '' }}">
+  <section class="card" id="panel">
+    <h2>Pipeline checks</h2>
+    <p class="hint">Live view of the latest GitHub Actions run and the report saved on this computer.</p>
+    <div class="banner idle" id="banner">Loading…</div>
+    <div class="steps" id="steps"></div>
+    <div class="meta" id="meta"></div>
+    <div class="nums">
+      <div class="num"><div>Total</div><strong id="n-total">–</strong></div>
+      <div class="num"><div>Passed</div><strong id="n-pass" style="color:var(--ok)">–</strong></div>
+      <div class="num"><div>Failed</div><strong id="n-fail" style="color:var(--bad)">–</strong></div>
+      <div class="num"><div>Pass rate</div><strong id="n-rate">–</strong></div>
+    </div>
+    <div class="bar"><i id="rate-bar"></i></div>
+    <table>
+      <thead><tr><th>Test</th><th style="width:90px">Result</th></tr></thead>
+      <tbody id="tests"><tr><td colspan="2">No report yet.</td></tr></tbody>
+    </table>
+    <div class="actions">
+      <button class="b-run" id="btn-run">▶ Run tests</button>
+      <button class="b-break" id="btn-break">✖ Push defect</button>
+      <button class="b-fix" id="btn-fix">✔ Fix &amp; push</button>
+    </div>
+    <div id="note"></div>
+  </section>
+</main>
 
-    <label for="title">Assignment title</label>
-    <input id="title" name="title" value="{{ form.get('title', '') if errors else '' }}">
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-    <label for="url">Submission URL</label>
-    <input id="url" name="url" placeholder="https://github.com/you/assignment" value="{{ form.get('url', '') if errors else '' }}">
+function jobState(job) {
+  if (!job) return ["skip", "waiting"];
+  if (job.status !== "completed") return ["run", job.status === "queued" ? "queued" : "running…"];
+  if (job.conclusion === "success") return ["ok", "done"];
+  if (job.conclusion === "skipped") return ["skip", "skipped"];
+  return ["bad", job.conclusion || "failed"];
+}
 
-    <button type="submit">Submit</button>
-  </form>
+function render(d) {
+  const run = d.run, rep = d.report;
+  $("conn").textContent = d.error ? "GitHub not reachable" : "Connected to GitHub";
 
-  <h2>Saved submissions ({{ submissions|length }})</h2>
-  <table>
-    <tr><th>Name</th><th>Reg. No</th><th>Title</th><th>URL</th><th>Submitted at</th></tr>
-    {% for s in submissions %}
-      <tr><td>{{ s.name }}</td><td>{{ s.reg_no }}</td><td>{{ s.title }}</td>
-          <td><a href="{{ s.url }}" target="_blank">{{ s.url }}</a></td><td>{{ s.submitted_at }}</td></tr>
-    {% else %}
-      <tr><td colspan="5">No submissions yet.</td></tr>
-    {% endfor %}
-  </table>
+  // banner
+  const b = $("banner");
+  if (!run) { b.className = "banner idle"; b.innerHTML = "No pipeline run yet."; }
+  else if (run.status !== "completed") { b.className = "banner run"; b.innerHTML = `⏳ Checks are running (run #${run.number})<small>${esc(run.title)}</small>`; }
+  else if (run.jobs.test && run.jobs.test.conclusion === "success") { b.className = "banner ok"; b.innerHTML = `✔ All tests passed (run #${run.number})<small>${esc(run.title)}</small>`; }
+  else { b.className = "banner bad"; b.innerHTML = `✖ Tests failed (run #${run.number})<small>${esc(run.title)}</small>`; }
+
+  // steps
+  const jobs = run ? run.jobs : {};
+  const reportForRun = rep && run && String(rep.run_id) === run.id;
+  const test = jobState(jobs.test);
+  let report = ["skip", "waiting"];
+  if (reportForRun) report = [rep.overall_status === "passed" ? "ok" : "bad", "saved on this PC"];
+  else if (test[0] === "run") report = ["run", "waiting for tests"];
+  const email = jobState(jobs["email-report"]);
+  if (email[0] === "ok") email[1] = "email sent";
+  const pages = jobState(jobs["deploy-pages"]);
+  if (pages[0] === "ok") pages[1] = "deployed"; if (pages[1] === "skipped") pages[1] = "skipped (tests failed)";
+  const steps = [
+    ["Push", run ? ["ok", run.event === "workflow_dispatch" ? "manual run" : "commit " + run.sha] : ["skip", "–"]],
+    ["Tests (laptop)", test], ["Report → localhost", report], ["Email", email], ["GitHub Pages", pages]];
+  $("steps").innerHTML = steps.map(([name, [cls, txt]]) => `<div class="step ${cls}"><b>${name}</b><span>${esc(txt)}</span></div>`).join("");
+
+  // meta
+  $("meta").innerHTML = run
+    ? `Run <a href="${run.url}" target="_blank">#${run.number} on GitHub ↗</a> · branch <b>${esc(run.branch)}</b> · commit <b>${esc(run.sha)}</b>` +
+      (rep ? `<br>Local report: run ${esc(rep.run_id)} · ${esc(rep.timestamp)}` : "") +
+      (d.defect ? `<br><b style="color:var(--bad)">app.py currently contains the demo defect.</b>` : "")
+    : (d.error ? esc(d.error) : "");
+
+  // numbers + tests (from the local test-report.json)
+  if (rep) {
+    const s = rep.summary, rate = s.total ? Math.round(100 * s.passed / s.total) : 0;
+    $("n-total").textContent = s.total; $("n-pass").textContent = s.passed; $("n-fail").textContent = s.failed;
+    $("n-rate").textContent = rate + "%"; $("rate-bar").style.width = rate + "%";
+    $("rate-bar").style.background = s.failed ? "var(--bad)" : "var(--ok)";
+    $("tests").innerHTML = rep.tests.map(t => `<tr><td>${esc(t.name.replace(/^test_/, "").replace(/_/g, " "))}` +
+      (t.failure_message ? `<div class="why">${esc(t.failure_message.split("\n")[0])}</div>` : "") +
+      `</td><td><span class="tag ${t.result}">${t.result.toUpperCase()}</span></td></tr>`).join("");
+  }
+
+  // buttons
+  const busy = d.busy || (run && run.status !== "completed");
+  $("btn-run").disabled = busy;
+  $("btn-break").disabled = busy || d.defect;
+  $("btn-fix").disabled = busy || !d.defect;
+}
+
+async function refresh() {
+  try { render(await (await fetch("/api/status")).json()); }
+  catch (e) { $("conn").textContent = "Portal server stopped"; }
+}
+
+async function post(url, confirmText) {
+  if (confirmText && !window.confirm(confirmText)) return;
+  $("note").textContent = "Working…";
+  try { const r = await (await fetch(url, { method: "POST" })).json(); $("note").textContent = r.message; }
+  catch (e) { $("note").textContent = "Request failed."; }
+  setTimeout(refresh, 1500);
+}
+
+$("btn-run").onclick = () => post("/api/run-tests");
+$("btn-break").onclick = () => post("/api/demo/break", "Commit and push a defect to main? The tests should fail.");
+$("btn-fix").onclick = () => post("/api/demo/fix", "Commit and push the fix to main?");
+refresh(); setInterval(refresh, 4000);
+</script>
 </body>
 </html>

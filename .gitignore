@@ -9,3 +9,6 @@ evidence/
 _setup/
 *.docx
 ~$*
+evidence2/
+.demo-busy
+demo-log.txt
